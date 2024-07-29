@@ -162,26 +162,34 @@ for (col in names(train_data)[numeric_columns]) {
 }
 
 # 8. Identificação e eliminação de atributos não necessários
-#é a copia de education.num
-database$education <- remove()
+#é a copia de education
+database$education_num <- remove()
 #Não é um dado significante para a base de dados
 database$fnlwgt <- remove()
 
-database <- na.omit(database)
+# 9. Identificação e eliminação de exemplos não necessários
 
-database$Work.Class <- ifelse(database$Work.Class == " Private", 0, database$Work.Class)
-database$Work.Class <- ifelse(database$Work.Class == " Self-emp-not-inc", 1, database$Work.Class)
-database$Work.Class <- ifelse(database$Work.Class == " Self-emp-inc", 2, database$Work.Class)
-database$Work.Class <- ifelse(database$Work.Class == " Federal-gov", 3, database$Work.Class)
-database$Work.Class <- ifelse(database$Work.Class == " Local-gov", 4, database$Work.Class)
-database$Work.Class <- ifelse(database$Work.Class == " State-gov" , 5, database$Work.Class)
-database$Work.Class <- ifelse(database$Work.Class == " Never-worked", 6, database$Work.Class)
-database$Work.Class <- ifelse(database$Work.Class == " Without-pay", 7, database$Work.Class)
-database$Work.Class <- ifelse(database$Work.Class == " ?", 8, database$Work.Class)
+#Como cada exemplo é importante para o treinamento do modelo de linguagem, a eliminação de exemplos será desconsiderada
+
+# 10. Análise e aplicação de técnicas de amostragem de dados
+
+
+
+
+
+#database$Work.Class <- ifelse(database$Work.Class == " Private", 0, database$Work.Class)
+#database$Work.Class <- ifelse(database$Work.Class == " Self-emp-not-inc", 1, database$Work.Class)
+#database$Work.Class <- ifelse(database$Work.Class == " Self-emp-inc", 2, database$Work.Class)
+#database$Work.Class <- ifelse(database$Work.Class == " Federal-gov", 3, database$Work.Class)
+#database$Work.Class <- ifelse(database$Work.Class == " Local-gov", 4, database$Work.Class)
+#database$Work.Class <- ifelse(database$Work.Class == " State-gov" , 5, database$Work.Class)
+#database$Work.Class <- ifelse(database$Work.Class == " Never-worked", 6, database$Work.Class)
+#database$Work.Class <- ifelse(database$Work.Class == " Without-pay", 7, database$Work.Class)
+#database$Work.Class <- ifelse(database$Work.Class == " ?", 8, database$Work.Class)
 
 #database <- subset(database, Work.Class != " ?")
 
-database$Work.Class
+#database$Work.Class
 
-boxplot(database$Capital.Gain, main= "boxplot capital_gain")
-boxplot(database$Capital.loss, main= "boxplot capital_loss")
+#boxplot(database$Capital.Gain, main= "boxplot capital_gain")
+#boxplot(database$Capital.loss, main= "boxplot capital_loss")
