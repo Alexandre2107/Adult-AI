@@ -1,14 +1,45 @@
-# Carregando os Dados do arquivo
+---
+title: "Análise da Base de Dados Adult"
+output: html_document
+---
+
+## Sobre a base de dados
+O conjunto de dados utilizado é chamado "Adult" e foi derivado do banco de dados do censo dos EUA. Foi preparado por Barry Becker a partir do censo de 1994. O propósito desse conjunto de dados é prever se uma pessoa ganha mais ou menos de US$ 50.000 por ano.
+
+Link do conjunto de dados: [https://archive.ics.uci.edu/ml/datasets/Adult](https://archive.ics.uci.edu/ml/datasets/Adult)
+
+## Carregando os Dados do arquivo
+```{r results='hide'}
 database <- read.csv(file = "Adult.CSV")
 
 colnames(database) <- c("age", "workclass", "fnlwgt", "education", "education_num", "marital_status", "occupation", "relationship", "race", "sex", "capital_gain", "capital_loss", "hours_per_week", "native_country", "income")
 
-# 1. Identificação do atributo alvo (saída)
+#Printar a base de dados
+database
+```
+
+```{r echo = FALSE, results= 'asis'}
+library(knitr)
+kable(database[1:5, ], caption = "Adult Database")
+```
+
+## 1. Identificação do atributo alvo (saída)
+A base de dados possui 32561 exemplos e 15 atributos sendo seu atributo alvo "income"
+```{r}
 target_attribute <- "income"
+```
 
-# 2. Identificação dos tipos de dados dos atributos de entrada (quantitativo, qualitativo)
-str(database)
+## 2. Identificação dos tipos de dados dos atributos de entrada (quantitativo, qualitativo)
+Identificar os tipos de dados em uma base de dados é essencial para entender a natureza das informações presentes. Na base de dados analisada, os dados podem ser classificados nas seguintes categorias:
 
+  * Categóricos: Representam características com valores qualitativos.
+  * Numéricos: Representam valores numéricos.
+```{r}
+#Para classificação dos atributos como int ou char
+  str(database)
+```
+```{r results='hide'}
+#classificação manual
 data_types <- c(
   age = "quantitativo",
   workclass = "qualitativo",
@@ -27,8 +58,23 @@ data_types <- c(
   income = "qualitativo"
 )
 data_types
+```
+```{r echo = FALSE, results= 'asis'}
+library(knitr)
+kable(data_types, caption = "Tipos de dados dos atributos de entrada", col.names = c("Atributo", "Classificação"))
+```
 
-# 3. Identificação da escala de dados dos atributos de entrada (nominal, ordinal, intervalar, racional)
+## 3. Identificação da escala de dados dos atributos de entrada (nominal, ordinal, intervalar, racional)
+A identificação da escala de dados é relevante para entender a natureza e a magnitude dos valores presentes em uma base de dados. A escala dos dados pode ser dividida em quatro categorias principais:
+
+  * Nominal: Categorizados em diferentes grupos ou categorias, sem qualquer ordem ou hierarquia específica.
+
+  * Ordinal: Possuem uma ordem ou hierarquia específica, mas a diferença entre os valores não é necessariamente uniforme.
+
+  * Intervalar: Expressos em valores numéricos com uma diferença uniforme entre eles.
+
+  * Racional: Representam um valor numérico absoluto.
+```{r results='hide'}
 data_scales <- c(
   age = "Racional",
   workclass = "Nominal",
@@ -47,8 +93,20 @@ data_scales <- c(
   income = "Nominal"
 )
 data_scales
+```
+```{r echo = FALSE, results= 'asis'}
+library(knitr)
+kable(data_scales, caption = "Identificação da escala de dados", col.names = c("Atributo", "Escala") )
+```
 
-# 4. Exploração dos dados através de medidas de localidade
+## 4. Exploração dos dados através de medidas de localidade
+As medidas de localidade, fornecem informações sobre o valor central dos dados, no qual ajudam a entender onde a maioria dos dados está concentrado. Essas medidas ajudam a entender onde a maioria dos dados está concentrada. Incluem:
+
+* Média
+* Moda
+* Mediana
+
+```{r}
 numeric_columns1 <- sapply(database, is.numeric)
 summary(database[, numeric_columns1])
 
@@ -63,7 +121,16 @@ for (i in 1:ncol(database)) {
   print(mod_val)
 }
 
-# 5. Exploração dos dados através de medidas de espalhamento
+```
+
+## 5. Exploração dos dados através de medidas de espalhamento
+As medidas de espalhamento são utilizadas para avaliar a dispersão ou variabilidade dos dados em um conjunto de observações. Elas fornecem informações sobre o quão distantes os valores estão uns dos outros e da medida central dos dados. Incluem
+
+* Variância
+* Desvio Padrão
+* Amplitude
+
+```{r}
 spread_measures <- function(x) {
   c(variance = var(x, na.rm = TRUE), sd = sd(x, na.rm = TRUE), range = range(x, na.rm = TRUE))
 }
@@ -72,8 +139,14 @@ spread_measures <- function(x) {
 numeric_columns2 <- sapply(database, is.numeric)
 # Aplica a função spread_measures a cada coluna numérica para calcular a variância, desvio padrão e amplitude para cada uma
 sapply(database[, numeric_columns2], spread_measures)
+```
 
-# 6. Exploração dos dados através de medidas de distribuição;
+## 6. Exploração dos dados através de medidas de distribuição
+As medidas de distribuição são utilizadas para analisar a forma e a natureza da distribuição dos dados em um conjunto de observações.Essas medidas fornecem informações sobre a simetria, o achatamento e a forma geral da distribuição dos dados. Incluem:
+
+* Assimetria
+* Curtose
+```{r}
 # Funções para calcular assimetria e curtose
 calc_skewness <- function(x) {
   n <- length(x)
@@ -101,6 +174,7 @@ boxplot(database$education_num, main = "Education_num Boxplot")
 boxplot(database$capital_gain, main = "capital_gain Boxplot")
 boxplot(database$capital_loss, main = "capital_loss Boxplot")
 boxplot(database$hours_per_week, main = "hours_per_week Boxplot")
+      
 
 # Calculando assimetria e curtose
 skewness_values <- sapply(database[, numeric_columns3], calc_skewness)
@@ -124,8 +198,17 @@ barplot(metrics_df$Kurtosis, names.arg = metrics_df$Variable,
         main = "Curtose das Variáveis Numéricas", 
         col = "lightgreen", ylim = c(min(metrics_df$Kurtosis) - 1, max(metrics_df$Kurtosis) + 1),
         cex.names = 0.7, las = 2)
+```
 
-# 7. Identificação e separação do conjunto de teste
+## 7. Identificação e separação do conjunto de teste
+
+A base de dados original possui 32561 exemplos e 15 atributos
+
+A base de dados teste possui 16281 exemplos e 15 atributos
+
+O que implica em uma base de dados com metade dos exemplos.
+
+```{r}
 train_data <- read.csv(file = "Adult.CSV")
 test_data <- read.csv(file = "adultTest.csv")
 
@@ -160,28 +243,8 @@ for (col in names(train_data)[numeric_columns]) {
   axis(1, at = 1:2, labels = c("Train", "Test"))
   legend("topright", legend = c("Train", "Test"), col = c("blue", "green"), pch = 1)
 }
+```
 
-# 8. Identificação e eliminação de atributos não necessários
-#é a copia de education.num
-database$education <- remove()
-#Não é um dado significante para a base de dados
-database$fnlwgt <- remove()
+##### Os boxplots mostram a distribuição dos dados por meio de quartis, mediana, outliers e intervalo interquartil. Ao comparar os boxplots, nota-se que as medidas estatísticas, como quartis e mediana, são próximas entre as bases original e de teste. Isso sugere que os atributos estão sendo preservados de forma consistente na base de teste, com valores semelhantes aos do conjunto original. Os gráficos de dispersão mostram a relação entre dois atributos, permitindo observar a dispersão dos pontos. Ao comparar os gráficos de dispersão, podemos identificar se a relação entre os atributos é preservada na base de teste. Se os pontos seguem uma tendência semelhante e mantêm uma relação coerente, isso indica que a base de teste reflete adequadamente as características do conjunto original.
+**Conclui-se que a base de dados de testes mantém as mesmas características da base de dados original.** 
 
-database <- na.omit(database)
-
-database$Work.Class <- ifelse(database$Work.Class == " Private", 0, database$Work.Class)
-database$Work.Class <- ifelse(database$Work.Class == " Self-emp-not-inc", 1, database$Work.Class)
-database$Work.Class <- ifelse(database$Work.Class == " Self-emp-inc", 2, database$Work.Class)
-database$Work.Class <- ifelse(database$Work.Class == " Federal-gov", 3, database$Work.Class)
-database$Work.Class <- ifelse(database$Work.Class == " Local-gov", 4, database$Work.Class)
-database$Work.Class <- ifelse(database$Work.Class == " State-gov" , 5, database$Work.Class)
-database$Work.Class <- ifelse(database$Work.Class == " Never-worked", 6, database$Work.Class)
-database$Work.Class <- ifelse(database$Work.Class == " Without-pay", 7, database$Work.Class)
-database$Work.Class <- ifelse(database$Work.Class == " ?", 8, database$Work.Class)
-
-#database <- subset(database, Work.Class != " ?")
-
-database$Work.Class
-
-boxplot(database$Capital.Gain, main= "boxplot capital_gain")
-boxplot(database$Capital.loss, main= "boxplot capital_loss")
