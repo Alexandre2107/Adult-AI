@@ -169,9 +169,19 @@ database$fnlwgt <- remove()
 
 # 9. Identificação e eliminação de exemplos não necessários
 
-#Como cada exemplo é importante para o treinamento do modelo de linguagem, a eliminação de exemplos será desconsiderada
+#Achar 
+empty_rows <- !complete.cases(database)
+print(database[empty_rows, ])
+database <- na.omit(database)
+
 
 # 10. Análise e aplicação de técnicas de amostragem de dados
+# Verificar a estrutura dos dados
+str(train_data)
+# Checar a distribuição do atributo alvo
+table(database$income)
+# Calcular proporções
+prop.table(table(train_data$income))
 
 
 
