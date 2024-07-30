@@ -1,6 +1,7 @@
 ---
 title: "Análise da Base de Dados Adult"
-output: html_document
+output:
+  pdf_document: default
 ---
 
 ## Sobre a base de dados
@@ -215,6 +216,8 @@ test_data <- read.csv(file = "adultTest.csv")
 colnames(train_data) <- c("age", "workclass", "fnlwgt", "education", "education_num", "marital_status", "occupation", "relationship", "race", "sex", "capital_gain", "capital_loss", "hours_per_week", "native_country", "income")
 
 colnames(test_data) <- c("age", "workclass", "fnlwgt", "education", "education_num", "marital_status", "occupation", "relationship", "race", "sex", "capital_gain", "capital_loss", "hours_per_week", "native_country", "income")
+test_data$income <- gsub(" >50K.", " >50K", test_data$income)
+test_data$income <- gsub(" <=50K.", " <=50K", test_data$income)
 
 # Identificando colunas numéricas
 numeric_columns <- sapply(train_data, is.numeric)
@@ -246,5 +249,85 @@ for (col in names(train_data)[numeric_columns]) {
 ```
 
 ##### Os boxplots mostram a distribuição dos dados por meio de quartis, mediana, outliers e intervalo interquartil. Ao comparar os boxplots, nota-se que as medidas estatísticas, como quartis e mediana, são próximas entre as bases original e de teste. Isso sugere que os atributos estão sendo preservados de forma consistente na base de teste, com valores semelhantes aos do conjunto original. Os gráficos de dispersão mostram a relação entre dois atributos, permitindo observar a dispersão dos pontos. Ao comparar os gráficos de dispersão, podemos identificar se a relação entre os atributos é preservada na base de teste. Se os pontos seguem uma tendência semelhante e mantêm uma relação coerente, isso indica que a base de teste reflete adequadamente as características do conjunto original.
-**Conclui-se que a base de dados de testes mantém as mesmas características da base de dados original.** 
+**Conclui-se que a base de dados de testes mantém as mesmas características da base de dados original.**
 
+## 8. Identificação e eliminação de atributos não necessários
+
+Foi removido o atributo fnlwgt, pois não é relevante para a tarefa de previsão em questão, e o atributo education-num, pois duplica as informações disponíveis no atributo education.
+
+```{r}
+#é a copia de education
+database$education_num <- remove()
+#Não é um dado significante para a base de dados
+database$fnlwgt <- remove()
+```
+
+## 9. Identificação e eliminação de exemplos não necessários
+
+A única eliminação feita foi em uma linha na base de dados onde todos os atributos se encontram como "N/A"
+```{r}
+#Achar o único exemplo onde não há nada nele
+empty_rows <- !complete.cases(database)
+#Printar a linha no qual ele se encontra
+print(database[empty_rows, ])
+#Remover a linha N/A
+database <- na.omit(database)
+
+#Checando se há algum exemplo que está como NA na base de teste
+empty_rows <- !complete.cases(test_data)
+print(test_data[empty_rows, ])
+```
+
+## 10 e 11. Análise e aplicação de técnicas de amostragem de dados e desbalanceamento
+
+Para realziar uma análise ou aplicar técnicas de amostragem de dados primeiro é preciso verificar se a base de dados de treinamento e teste estão desbalanceados.
+
+```{r}
+# Checar a distribuição da base de treinamento do atributo alvo
+table(database$income)
+# Calcular proporções
+prop.table(table(database$income))
+
+#Checar a distribuição da base de teste do atributo alvo
+table(test_data$income)
+prop.table(table(test_data$income))
+```
+
+Como podemos ver ambas as bases estão desbalanceadas, e por isso vamos aplicar técnicas de amostragem de dados e desbalanceamento, a técnica de amostragem utilizada foi amostragem aleatória simples (Sem reposição de exemplos) e para técnicas de desbalanceamento foi utilizado a técnica de undersampling (Onde igualamos os números de casos da classe majoritária com o número de casos da classe minoritária).
+
+```{r}
+# Função para realizar amostragem estratificada
+amostra_estratificada <- function(data, target_col) {
+  # Separar as classes
+  class_min <- subset(data, data[[target_col]] == " >50K")
+  class_maj <- subset(data, data[[target_col]] == " <=50K")
+  
+  # Número de exemplos na classe minoritária
+  num_min <- nrow(class_min)
+  
+  # Amostragem aleatória da classe majoritária
+  set.seed(123) # para reprodutibilidade
+  class_maj_sampled <- class_maj[sample(nrow(class_maj), num_min, replace = FALSE), ]
+  
+  # Combinar as classes amostradas
+  balanced_data <- rbind(class_min, class_maj_sampled)
+  
+  # Embaralhar os dados para evitar ordenação por classe
+  balanced_data <- balanced_data[sample(nrow(balanced_data)), ]
+  
+  return(balanced_data)
+}
+
+# Aplicar a função nas bases de dados
+train_data_balanced <- amostra_estratificada(train_data, "income")
+test_data_balanced <- amostra_estratificada(test_data, "income")
+
+# Nova distribuição da base de treinamento
+table(train_data_balanced$income)
+prop.table(table(train_data_balanced$income))
+
+# Nova distribuição da base de teste
+table(test_data_balanced$income)
+prop.table(table(test_data_balanced$income))
+```
+   

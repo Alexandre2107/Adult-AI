@@ -169,19 +169,63 @@ database$fnlwgt <- remove()
 
 # 9. Identificação e eliminação de exemplos não necessários
 
-#Achar 
-empty_rows <- !complete.cases(database)
-print(database[empty_rows, ])
-database <- na.omit(database)
+#Achar o único exemplo onde não há nada nele
+empty_rows <- !complete.cases(train_data)
+#Printar a linha no qual ele se encontra
+print(train_data[empty_rows, ])
+#Remover a linha N/A
+train_data <- na.omit(train_data)
+
+#Checando se há algum exemplo que está como NA na base de teste
+empty_rows <- !complete.cases(test_data)
+print(test_data[empty_rows, ])
 
 
 # 10. Análise e aplicação de técnicas de amostragem de dados
-# Verificar a estrutura dos dados
-str(train_data)
-# Checar a distribuição do atributo alvo
-table(database$income)
+# Checar a distribuição da base de treinamento do atributo alvo
+table(train_data$income)
 # Calcular proporções
 prop.table(table(train_data$income))
+
+#Checar a distribuição da base de teste do atributo alvo
+table(test_data$income)
+prop.table(table(test_data$income))
+
+# Função para realizar amostragem estratificada
+amostra_estratificada <- function(data, target_col) {
+  # Separar as classes
+  class_min <- subset(data, data[[target_col]] == " >50K")
+  class_maj <- subset(data, data[[target_col]] == " <=50K")
+  
+  # Número de exemplos na classe minoritária
+  num_min <- nrow(class_min)
+  
+  # Amostragem aleatória da classe majoritária
+  set.seed(123) # para reprodutibilidade
+  class_maj_sampled <- class_maj[sample(nrow(class_maj), num_min, replace = FALSE), ]
+  
+  # Combinar as classes amostradas
+  balanced_data <- rbind(class_min, class_maj_sampled)
+  
+  # Embaralhar os dados para evitar ordenação por classe
+  balanced_data <- balanced_data[sample(nrow(balanced_data)), ]
+  
+  return(balanced_data)
+}
+
+# Aplicar a função nas bases de dados
+train_data_balanced <- amostra_estratificada(train_data, "income")
+test_data_balanced <- amostra_estratificada(test_data, "income")
+
+# Nova distribuição da base de treinamento
+table(train_data_balanced$income)
+prop.table(table(train_data_balanced$income))
+
+# Nova distribuição da base de teste
+table(test_data_balanced$income)
+prop.table(table(test_data_balanced$income))
+
+
 
 
 
