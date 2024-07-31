@@ -1,15 +1,16 @@
 ---
 title: "Análise da Base de Dados Adult"
 output:
-  pdf_document: default
+  html_document:
+    df_print: paged
 ---
 
-## Sobre a base de dados
+# Sobre a base de dados
 O conjunto de dados utilizado é chamado "Adult" e foi derivado do banco de dados do censo dos EUA. Foi preparado por Barry Becker a partir do censo de 1994. O propósito desse conjunto de dados é prever se uma pessoa ganha mais ou menos de US$ 50.000 por ano.
 
 Link do conjunto de dados: [https://archive.ics.uci.edu/ml/datasets/Adult](https://archive.ics.uci.edu/ml/datasets/Adult)
 
-## Carregando os Dados do arquivo
+# Carregando os Dados do arquivo
 ```{r results='hide'}
 database <- read.csv(file = "Adult.CSV")
 
@@ -22,30 +23,30 @@ database
 ```{r echo = FALSE, results = 'asis'}
 library(knitr)
 
-# Sample data for demonstration
+
 data_part1 <- database[1:5, 1:7]
 data_part2 <- database[1:5, 8:ncol(database)]
 
-# Create the first part of the table
+
 table1 <- kable(data_part1, caption = "Adult Database - Part 1")
 
-# Create the second part of the table
+
 table2 <- kable(data_part2, caption = "Adult Database - Part 2")
 
-# Print the tables
+
 cat(table1, sep = "\n")
 cat("\n\n")
 cat(table2, sep = "\n")
 
 ```
 
-## 1. Identificação do atributo alvo (saída)
+# 1. Identificação do atributo alvo (saída)
 A base de dados possui 32561 exemplos e 15 atributos sendo seu atributo alvo "income"
 ```{r}
 target_attribute <- "income"
 ```
 
-## 2. Identificação dos tipos de dados dos atributos de entrada (quantitativo, qualitativo)
+# 2. Identificação dos tipos de dados dos atributos de entrada (quantitativo, qualitativo)
 Identificar os tipos de dados em uma base de dados é essencial para entender a natureza das informações presentes. Na base de dados analisada, os dados podem ser classificados nas seguintes categorias:
 
   * Categóricos: Representam características com valores qualitativos.
@@ -80,7 +81,7 @@ library(knitr)
 kable(data_types, caption = "Tipos de dados dos atributos de entrada", col.names = c("Atributo", "Classificação"))
 ```
 
-## 3. Identificação da escala de dados dos atributos de entrada (nominal, ordinal, intervalar, racional)
+# 3. Identificação da escala de dados dos atributos de entrada (nominal, ordinal, intervalar, racional)
 A identificação da escala de dados é relevante para entender a natureza e a magnitude dos valores presentes em uma base de dados. A escala dos dados pode ser dividida em quatro categorias principais:
 
   * Nominal: Categorizados em diferentes grupos ou categorias, sem qualquer ordem ou hierarquia específica.
@@ -115,7 +116,7 @@ library(knitr)
 kable(data_scales, caption = "Identificação da escala de dados", col.names = c("Atributo", "Escala") )
 ```
 
-## 4. Exploração dos dados através de medidas de localidade
+# 4. Exploração dos dados através de medidas de localidade
 As medidas de localidade, fornecem informações sobre o valor central dos dados, no qual ajudam a entender onde a maioria dos dados está concentrado. Essas medidas ajudam a entender onde a maioria dos dados está concentrada. Incluem:
 
 * Média
@@ -139,7 +140,7 @@ for (i in 1:ncol(database)) {
 
 ```
 
-## 5. Exploração dos dados através de medidas de espalhamento
+# 5. Exploração dos dados através de medidas de espalhamento
 As medidas de espalhamento são utilizadas para avaliar a dispersão ou variabilidade dos dados em um conjunto de observações. Elas fornecem informações sobre o quão distantes os valores estão uns dos outros e da medida central dos dados. Incluem
 
 * Variância
@@ -157,7 +158,7 @@ numeric_columns2 <- sapply(database, is.numeric)
 sapply(database[, numeric_columns2], spread_measures)
 ```
 
-## 6. Exploração dos dados através de medidas de distribuição
+# 6. Exploração dos dados através de medidas de distribuição
 As medidas de distribuição são utilizadas para analisar a forma e a natureza da distribuição dos dados em um conjunto de observações.Essas medidas fornecem informações sobre a simetria, o achatamento e a forma geral da distribuição dos dados. Incluem:
 
 * Assimetria
@@ -180,7 +181,6 @@ calc_kurtosis <- function(x) {
   return(kurtosis)
 }
 
-# Supondo que 'database' é o seu conjunto de dados
 numeric_columns3 <- sapply(database, is.numeric)
 
 # Plotando boxplots para cada variável numérica
@@ -216,7 +216,7 @@ barplot(metrics_df$Kurtosis, names.arg = metrics_df$Variable,
         cex.names = 0.7, las = 2)
 ```
 
-## 7. Identificação e separação do conjunto de teste
+# 7. Identificação e separação do conjunto de teste
 
 A base de dados original possui 32561 exemplos e 15 atributos
 
@@ -266,42 +266,48 @@ for (col in names(train_data)[numeric_columns]) {
 ##### Os boxplots mostram a distribuição dos dados por meio de quartis, mediana, outliers e intervalo interquartil. Ao comparar os boxplots, nota-se que as medidas estatísticas, como quartis e mediana, são próximas entre as bases original e de teste. Isso sugere que os atributos estão sendo preservados de forma consistente na base de teste, com valores semelhantes aos do conjunto original. Os gráficos de dispersão mostram a relação entre dois atributos, permitindo observar a dispersão dos pontos. Ao comparar os gráficos de dispersão, podemos identificar se a relação entre os atributos é preservada na base de teste. Se os pontos seguem uma tendência semelhante e mantêm uma relação coerente, isso indica que a base de teste reflete adequadamente as características do conjunto original.
 **Conclui-se que a base de dados de testes mantém as mesmas características da base de dados original.**
 
-## 8. Identificação e eliminação de atributos não necessários
+# 8. Identificação e eliminação de atributos não necessários
 
-Foi removido o atributo fnlwgt, pois não é relevante para a tarefa de previsão em questão, e o atributo education-num, pois duplica as informações disponíveis no atributo education.
+Foi removido o atributo fnlwgt, pois não é relevante para a tarefa de previsão em questão, e o atributo education-num, pois duplica as informações disponíveis no atributo education. Além disso, o atributo relationship foi removido, pois é um subgrupo do atributo marital_status.
 
 ```{r}
-#é a copia de education
-database$education_num <- remove()
+#é a copia de education_num 
+train_data$education <- remove()
 #Não é um dado significante para a base de dados
-database$fnlwgt <- remove()
+train_data$fnlwgt <- remove()
+#Relationship é um subgrupo de marital_status
+train_data$relationship <- remove()
+
+test_data$education <- remove()
+test_data$fnlwgt <- remove()
+test_data$relationship <- remove()
 ```
 
-## 9. Identificação e eliminação de exemplos não necessários
+# 9. Identificação e eliminação de exemplos não necessários
 
 A única eliminação feita foi em uma linha na base de dados onde todos os atributos se encontram como "N/A"
 ```{r}
 #Achar o único exemplo onde não há nada nele
-empty_rows <- !complete.cases(database)
+empty_rows <- !complete.cases(train_data)
 #Printar a linha no qual ele se encontra
-print(database[empty_rows, ])
+print(train_data[empty_rows, ])
 #Remover a linha N/A
-database <- na.omit(database)
+train_data <- train_data[-32562, ]
 
 #Checando se há algum exemplo que está como NA na base de teste
 empty_rows <- !complete.cases(test_data)
 print(test_data[empty_rows, ])
 ```
 
-## 10 e 11. Análise e aplicação de técnicas de amostragem de dados e desbalanceamento
+# 10 e 11. Análise e aplicação de técnicas de amostragem de dados e desbalanceamento
 
 Para realziar uma análise ou aplicar técnicas de amostragem de dados primeiro é preciso verificar se a base de dados de treinamento e teste estão desbalanceados.
 
 ```{r}
 # Checar a distribuição da base de treinamento do atributo alvo
-table(database$income)
+table(train_data$income)
 # Calcular proporções
-prop.table(table(database$income))
+prop.table(table(train_data$income))
 
 #Checar a distribuição da base de teste do atributo alvo
 table(test_data$income)
@@ -345,4 +351,457 @@ prop.table(table(train_data_balanced$income))
 table(test_data_balanced$income)
 prop.table(table(test_data_balanced$income))
 ```
+
+# 12. Limpeza de Dados
+
+Para a limpeza de dados, foram realizadas as seguintes etapas:
+
+## 1. Tratamento de valores ausentes: Foram substituídos os valores ausentes pela moda de cada coluna.
+ 
+Nesse caso foi optado por substituir os valores ausentes pela moda de cada coluna, pois a moda é uma medida de tendência central que representa o valor mais frequente em um conjunto de dados. Substituir os valores ausentes pela moda ajuda a manter a consistência dos dados e a preservar a distribuição original.
+
+```{r}
+# Substituir " ?" por NA
+train_data[train_data == " ?"] <- NA
+test_data[test_data == " ?"] <- NA
+
+# Imprimir a porcentagem de valores NA em cada coluna para verificar
+print(sapply(train_data, function(col) {
+  sum(is.na(col)) * 100 / length(col)
+}))
+
+print(sapply(test_data, function(col) {
+  sum(is.na(col)) * 100 / length(col)
+}))
+
+# Função para calcular a moda
+Modes <- function(x) {
+  ux <- unique(x)
+  ux[which.max(tabulate(match(x, ux)))]
+}
+
+# Substituir NA pela moda em cada coluna do train_data
+train_data <- data.frame(lapply(train_data, function(col) {
+  if (any(is.na(col))) {
+    col[is.na(col)] <- Modes(col[!is.na(col)])
+  }
+  return(col)
+}))
+
+# Substituir NA pela moda em cada coluna do test_data
+test_data <- data.frame(lapply(test_data, function(col) {
+  if (any(is.na(col))) {
+    col[is.na(col)] <- Modes(col[!is.na(col)])
+  }
+  return(col)
+}))
+
+# Imprimir a porcentagem de valores NA em cada coluna para verificar
+print(sapply(train_data, function(col) {
+  sum(is.na(col)) * 100 / length(col)
+}))
+
+print(sapply(test_data, function(col) {
+  sum(is.na(col)) * 100 / length(col)
+}))
+``` 
+
+## 2. Remoção de duplicatas: Foram removidas as linhas duplicadas da base de dados.
+ 
+A remoção de duplicatas é importante para garantir a integridade dos dados e evitar viés na análise. A presença de linhas duplicadas pode distorcer os resultados e levar a conclusões errôneas. Portanto, é essencial remover duplicatas para manter a qualidade dos dados.
+```{r}
+# Verificar duplicatas no train_data
+duplicated_train <- duplicated(train_data)
+any_duplicated_train <- any(duplicated_train)
+print(paste("Existem linhas duplicadas em train_data:", any_duplicated_train))
+
+# Verificar duplicatas no test_data
+duplicated_test <- duplicated(test_data)
+any_duplicated_test <- any(duplicated_test)
+print(paste("Existem linhas duplicadas em test_data:", any_duplicated_test))
+
+
+# Remover linhas duplicadas do train_data
+train_data <- train_data[!duplicated(train_data), ]
+
+# Remover linhas duplicadas do test_data
+test_data <- test_data[!duplicated(test_data), ]
+
+# Verificar novamente duplicatas no train_data
+duplicated_train <- duplicated(train_data)
+any_duplicated_train <- any(duplicated_train)
+print(paste("Existem linhas duplicadas em train_data:", any_duplicated_train))
+
+# Verificar novamente duplicatas no test_data
+duplicated_test <- duplicated(test_data)
+any_duplicated_test <- any(duplicated_test)
+print(paste("Existem linhas duplicadas em test_data:", any_duplicated_test))
+```
+
+
+## 3. Criação de grupos para valores categóricos: Foram agrupados os valores categóricos em grupos mais amplos para simplificar a análise.
+
+A criação de grupos para valores categóricos é útil para reduzir a complexidade dos dados e facilitar a análise. Agrupar valores categóricos semelhantes em categorias mais amplas pode ajudar a identificar padrões e tendências nos dados. Além disso, a criação de grupos pode melhorar a interpretação dos resultados e simplificar a visualização dos dados.
+```{r}  
+#Criação de grupos para alocar grupos parecidos (WorkClass)
+train_data$workclass <- as.character(train_data$workclass)
+
+train_data$workclass[train_data$workclass == " Without-pay" | 
+                   train_data$workclass == " Never-worked"] <- " Unemployed"
+
+train_data$workclass[train_data$workclass == " State-gov" |
+                  train_data$workclass == " Local-gov"] <- " SL-gov"
+
+train_data$workclass[train_data$workclass == " Self-emp-inc" |
+                  train_data$workclass == " Self-emp-not-inc"] <- " Self-employed"
+
+table(train_data$workclass)
+
+test_data$workclass <- as.character(test_data$workclass)
+
+test_data$workclass[test_data$workclass == " Without-pay" | 
+                   test_data$workclass == " Never-worked"] <- " Unemployed"
+
+test_data$workclass[test_data$workclass == " State-gov" |
+                  test_data$workclass == " Local-gov"] <- " SL-gov"
+
+test_data$workclass[test_data$workclass == " Self-emp-inc" |
+                  test_data$workclass == " Self-emp-not-inc"] <- " Self-employed"
+
+table(test_data$workclass)
+
+#Criação de grupos para alocar grupos parecidos (Marital Status)
+table(train_data$marital_status)
+
+train_data$marital_status <- as.character(train_data$marital_status)
+
+train_data$marital_status[train_data$marital_status == " Married-AF-spouse" |
+                       train_data$marital_status == " Married-civ-spouse" |
+                       train_data$marital_status == " Married-spouse-absent"] <- " Married"
+
+train_data$marital_status[train_data$marital_status == " Divorced" |
+                       train_data$marital_status == " Separated" |
+                       train_data$marital_status == " Widowed"] <- " Not-Married"
+table(train_data$marital_status)
+
+table(test_data$marital_status)
+
+test_data$marital_status <- as.character(test_data$marital_status)
+
+test_data$marital_status[test_data$marital_status == " Married-AF-spouse" |
+                       test_data$marital_status == " Married-civ-spouse" |
+                       test_data$marital_status == " Married-spouse-absent"] <- " Married"
+
+test_data$marital_status[test_data$marital_status == " Divorced" |
+                       test_data$marital_status == " Separated" |
+                       test_data$marital_status == " Widowed"] <- " Not-Married"
+table(test_data$marital_status)
+
+#Criação de grupos para alocar grupos parecidos (Native Country)
+train_data$native_country <- as.character(train_data$native_country)
+
+north_america <- c(" Canada", " Cuba", " Dominican-Republic", " El-Salvador", " Guatemala",
+                   " Haiti", " Honduras", " Jamaica", " Mexico", " Nicaragua",
+                   " Outlying-US(Guam-USVI-etc)", " Puerto-Rico", " Trinadad&Tobago",
+                   " United-States")
+asia <- c(" Cambodia", " China", " Hong", " India", " Iran", " Japan", " Laos",
+          " Philippines", " Taiwan", " Thailand", " Vietnam")
+south_america <- c(" Columbia", " Ecuador", " Peru")
+europe <- c(" England", " France", " Germany", " Greece", " Holand-Netherlands",
+            " Hungary", " Ireland", " Italy", " Poland", " Portugal", " Scotland",
+            " Yugoslavia")
+other <- c(" South")
+train_data$native_country[train_data$native_country %in% north_america] <- " North America"
+train_data$native_country[train_data$native_country %in% asia] <- " Asia"
+train_data$native_country[train_data$native_country %in% south_america] <- " South America"
+train_data$native_country[train_data$native_country %in% europe] <- " Europe"
+train_data$native_country[train_data$native_country %in% other] <- " Other"
+
+table(train_data$native_country)
+
+test_data$native_country <- as.character(test_data$native_country)
+
+north_america <- c(" Canada", " Cuba", " Dominican-Republic", " El-Salvador", " Guatemala",
+                   " Haiti", " Honduras", " Jamaica", " Mexico", " Nicaragua",
+                   " Outlying-US(Guam-USVI-etc)", " Puerto-Rico", " Trinadad&Tobago",
+                   " United-States")
+asia <- c(" Cambodia", " China", " Hong", " India", " Iran", " Japan", " Laos",
+          " Philippines", " Taiwan", " Thailand", " Vietnam")
+south_america <- c(" Columbia", " Ecuador", " Peru")
+europe <- c(" England", " France", " Germany", " Greece", " Holand-Netherlands",
+            " Hungary", " Ireland", " Italy", " Poland", " Portugal", " Scotland",
+            " Yugoslavia")
+other <- c(" South")
+test_data$native_country[test_data$native_country %in% north_america] <- " North America"
+test_data$native_country[test_data$native_country %in% asia] <- " Asia"
+test_data$native_country[test_data$native_country %in% south_america] <- " South America"
+test_data$native_country[test_data$native_country %in% europe] <- " Europe"
+test_data$native_country[test_data$native_country %in% other] <- " Other"
+
+table(test_data$native_country)
+```
+
+## Tabela de Dados (Treinamento) após a limpeza
+
+```{r echo = FALSE, results = 'asis'}
+library(knitr)
+
+
+data_part1 <- train_data[1:5, 1:5]
+data_part2 <- train_data[1:5, 6:ncol(train_data)]
+
+
+table1 <- kable(data_part1, caption = "Adult Database - Train Data - Part 1")
+
+
+table2 <- kable(data_part2, caption = "Adult Database - Train Data - Part 2")
+
+
+cat(table1, sep = "\n")
+cat("\n\n")
+cat(table2, sep = "\n")
+```
+
+## Tabela de Dados (Teste) após a limpeza
+
+```{r echo = FALSE, results = 'asis'}
+library(knitr)
+
+
+data_part1 <- test_data[1:5, 1:5]
+data_part2 <- test_data[1:5, 6:ncol(test_data)]
+
+
+table1 <- kable(data_part1, caption = "Adult Database - Test Data - Part 1")
+
+
+table2 <- kable(data_part2, caption = "Adult Database - Test Data - Part 2")
+
+
+cat(table1, sep = "\n")
+cat("\n\n")
+cat(table2, sep = "\n")
+```
    
+# 13. Identificação e conversão dos tipos de dados
+
+Para a identificação e conversão dos tipos de dados, foram realizadas a conversão de tipo de dados simbólicos para numéricos, a fim de facilitar a análise e a modelagem dos dados.
+
+```{r}
+# Conversão dos valores de 'workclass' e 'marital_status'
+table(train_data$workclass)
+
+train_data$workclass <- ifelse(train_data$workclass == " Federal-gov", 0, train_data$workclass)
+train_data$workclass <- ifelse(train_data$workclass == " Private", 1, train_data$workclass)
+train_data$workclass <- ifelse(train_data$workclass == " Self-employed", 2, train_data$workclass)
+train_data$workclass <- ifelse(train_data$workclass == " SL-gov", 3, train_data$workclass)
+train_data$workclass <- ifelse(train_data$workclass == " Unemployed", 4, train_data$workclass)
+
+table(test_data$workclass)
+
+test_data$workclass <- ifelse(test_data$workclass == " Federal-gov", 0, test_data$workclass)
+test_data$workclass <- ifelse(test_data$workclass == " Private", 1, test_data$workclass)
+test_data$workclass <- ifelse(test_data$workclass == " Self-employed", 2, test_data$workclass)
+test_data$workclass <- ifelse(test_data$workclass == " SL-gov", 3, test_data$workclass)
+test_data$workclass <- ifelse(test_data$workclass == " Unemployed", 4, test_data$workclass)
+
+table(train_data$marital_status)
+
+train_data$marital_status <- ifelse(train_data$marital_status == " Married", 0, train_data$marital_status)
+train_data$marital_status <- ifelse(train_data$marital_status == " Not-Married", 1, train_data$marital_status)
+train_data$marital_status <- ifelse(train_data$marital_status == " Never-married", 2, train_data$marital_status)
+
+table(test_data$marital_status)
+
+test_data$marital_status <- ifelse(test_data$marital_status == " Married", 0, test_data$marital_status)
+test_data$marital_status <- ifelse(test_data$marital_status == " Not-Married", 1, test_data$marital_status)
+test_data$marital_status <- ifelse(test_data$marital_status == " Never-married", 2, test_data$marital_status)
+
+# Conversão dos valores 'occupation'
+table(train_data$occupation)
+
+train_data$occupation <- ifelse(train_data$occupation == " Adm-clerical", 0, train_data$occupation)
+train_data$occupation <- ifelse(train_data$occupation == " Armed-Forces", 1, train_data$occupation)
+train_data$occupation <- ifelse(train_data$occupation == " Craft-repair", 2, train_data$occupation)
+train_data$occupation <- ifelse(train_data$occupation == " Exec-managerial", 3, train_data$occupation)
+train_data$occupation <- ifelse(train_data$occupation == " Farming-fishing", 4, train_data$occupation)
+train_data$occupation <- ifelse(train_data$occupation == " Handlers-cleaners", 5, train_data$occupation)
+train_data$occupation <- ifelse(train_data$occupation == " Machine-op-inspct", 6, train_data$occupation)
+train_data$occupation <- ifelse(train_data$occupation == " Other-service", 7, train_data$occupation)
+train_data$occupation <- ifelse(train_data$occupation == " Priv-house-serv", 8, train_data$occupation)
+train_data$occupation <- ifelse(train_data$occupation == " Prof-specialty", 9, train_data$occupation)
+train_data$occupation <- ifelse(train_data$occupation == " Protective-serv", 10, train_data$occupation)
+train_data$occupation <- ifelse(train_data$occupation == " Sales", 11, train_data$occupation)
+train_data$occupation <- ifelse(train_data$occupation == " Tech-support", 12, train_data$occupation)
+train_data$occupation <- ifelse(train_data$occupation == " Transport-moving", 13, train_data$occupation)
+
+table(test_data$occupation)
+
+test_data$occupation <- ifelse(test_data$occupation == " Adm-clerical", 0, test_data$occupation)
+test_data$occupation <- ifelse(test_data$occupation == " Armed-Forces", 1, test_data$occupation)
+test_data$occupation <- ifelse(test_data$occupation == " Craft-repair", 2, test_data$occupation)
+test_data$occupation <- ifelse(test_data$occupation == " Exec-managerial", 3, test_data$occupation)
+test_data$occupation <- ifelse(test_data$occupation == " Farming-fishing", 4, test_data$occupation)
+test_data$occupation <- ifelse(test_data$occupation == " Handlers-cleaners", 5, test_data$occupation)
+test_data$occupation <- ifelse(test_data$occupation == " Machine-op-inspct", 6, test_data$occupation)
+test_data$occupation <- ifelse(test_data$occupation == " Other-service", 7, test_data$occupation)
+test_data$occupation <- ifelse(test_data$occupation == " Priv-house-serv", 8, test_data$occupation)
+test_data$occupation <- ifelse(test_data$occupation == " Prof-specialty", 9, test_data$occupation)
+test_data$occupation <- ifelse(test_data$occupation == " Protective-serv", 10, test_data$occupation)
+test_data$occupation <- ifelse(test_data$occupation == " Sales", 11, test_data$occupation)
+test_data$occupation <- ifelse(test_data$occupation == " Tech-support", 12, test_data$occupation)
+test_data$occupation <- ifelse(test_data$occupation == " Transport-moving", 13, test_data$occupation)
+
+# Conversão dos valores 'race'
+table(train_data$race)
+
+train_data$race <- ifelse(train_data$race == " Amer-Indian-Eskimo", 0, train_data$race)
+train_data$race <- ifelse(train_data$race == " Asian-Pac-Islander", 1, train_data$race)
+train_data$race <- ifelse(train_data$race == " Black", 2, train_data$race)
+train_data$race <- ifelse(train_data$race == " Other", 3, train_data$race)
+train_data$race <- ifelse(train_data$race == " White", 4, train_data$race)
+
+table(test_data$race)
+
+test_data$race <- ifelse(test_data$race == " Amer-Indian-Eskimo", 0, test_data$race)
+test_data$race <- ifelse(test_data$race == " Asian-Pac-Islander", 1, test_data$race)
+test_data$race <- ifelse(test_data$race == " Black", 2, test_data$race)
+test_data$race <- ifelse(test_data$race == " Other", 3, test_data$race)
+test_data$race <- ifelse(test_data$race == " White", 4, test_data$race)
+
+# Conversão dos valores 'sex'
+table(train_data$sex)
+
+train_data$sex <- ifelse(train_data$sex == " Male", 0, train_data$sex)
+train_data$sex <- ifelse(train_data$sex == " Female", 1, train_data$sex)
+
+table(test_data$sex)
+
+test_data$sex <- ifelse(test_data$sex == " Male", 0, train_data$sex)
+test_data$sex <- ifelse(test_data$sex == " Female", 1, train_data$sex)
+
+# Conversão dos valores 'native_country'
+
+table(train_data$native_country)
+
+train_data$native_country <- ifelse(train_data$native_country == " North America", 0, train_data$native_country)
+train_data$native_country <- ifelse(train_data$native_country == " Asia", 1, train_data$native_country)
+train_data$native_country <- ifelse(train_data$native_country == " South America", 2, train_data$native_country)
+train_data$native_country <- ifelse(train_data$native_country == " Europe", 3, train_data$native_country)
+train_data$native_country <- ifelse(train_data$native_country == " Other", 4, train_data$native_country)
+
+table(test_data$native_country)
+
+test_data$native_country <- ifelse(test_data$native_country == " North America", 0, test_data$native_country)
+test_data$native_country <- ifelse(test_data$native_country == " Asia", 1, test_data$native_country)
+test_data$native_country <- ifelse(test_data$native_country == " South America", 2, test_data$native_country)
+test_data$native_country <- ifelse(test_data$native_country == " Europe", 3, test_data$native_country)
+test_data$native_country <- ifelse(test_data$native_country == " Other", 4, test_data$native_country)
+
+# Conversão dos valores 'income'
+table(train_data$income)
+
+train_data$income <- ifelse(train_data$income == " <=50K", 0, train_data$income)
+train_data$income <- ifelse(train_data$income == " >50K", 1, train_data$income)
+
+table(test_data$income)
+
+test_data$income <- ifelse(test_data$income == " <=50K", 0, test_data$income)
+test_data$income <- ifelse(test_data$income == " >50K", 1, test_data$income)
+
+```
+
+## Tabela de Dados (Treinamento) após a conversão
+
+```{r echo = FALSE, results = 'asis'}
+library(knitr)
+
+
+data_part1 <- train_data[1:5, 1:5]
+data_part2 <- train_data[1:5, 6:ncol(train_data)]
+
+
+table1 <- kable(data_part1, caption = "Adult Database - Train Data - Part 1")
+
+
+table2 <- kable(data_part2, caption = "Adult Database - Train Data - Part 2")
+
+
+cat(table1, sep = "\n")
+cat("\n\n")
+cat(table2, sep = "\n")
+```
+
+## Tabela de Dados (Teste) após a conversão
+
+```{r echo = FALSE, results = 'asis'}
+library(knitr)
+
+
+data_part1 <- test_data[1:5, 1:5]
+data_part2 <- test_data[1:5, 6:ncol(test_data)]
+
+
+table1 <- kable(data_part1, caption = "Adult Database - Test Data - Part 1")
+
+
+table2 <- kable(data_part2, caption = "Adult Database - Test Data - Part 2")
+
+
+cat(table1, sep = "\n")
+cat("\n\n")
+cat(table2, sep = "\n")
+```
+
+# 14. Análise e aplicação de alguma técnica para redução de dimensionalidade
+O PCA é uma técnica de transformação linear que busca identificar as principais direções de variação nos dados e projetá-los em um novo espaço de menor dimensionalidade
+
+```{r}
+head(train_data_balanced)
+
+# Normalização das variáveis numéricas
+numeric_cols <- sapply(train_data_balanced, is.numeric)
+train_data_num <- train_data_balanced[, numeric_cols]
+
+# Transformação de variáveis categóricas em variáveis dummy
+train_data_cat <- train_data_balanced[, !numeric_cols]
+
+# Usar a função model.matrix para criar variáveis dummy
+dummies <- model.matrix(~ . - 1, data = train_data_cat) # -1 para remover o intercepto
+
+# Combinar dados normalizados e variáveis dummy
+train_data_processed <- cbind(scale(train_data_num), dummies)
+
+# Aplicar PCA
+pca_result <- prcomp(train_data_processed, center = TRUE, scale. = TRUE)
+
+# Resumo dos resultados da PCA
+summary(pca_result)
+
+
+# Gráfico da variância explicada
+variance_explained <- summary(pca_result)$importance[2, ]
+barplot(variance_explained, main = "Proporção da Variância Explicada", 
+        xlab = "Componentes Principais", ylab = "Proporção da Variância")
+
+
+
+
+# Cálculo do número de componentes que explicam 95% da variância
+cumulative_variance <- cumsum(variance_explained)
+num_components <- which(cumulative_variance >= 0.95)[1]
+
+cat("Numero de componentes principais que explicam 95% da variancia:", num_components)
+
+
+# Obter as componentes principais
+pca_data <- as.data.frame(pca_result$x[, 1:num_components])
+
+# Visualizar os dados transformados
+head(pca_data)
+
+```
+
+A análise da proporção da variância é fundamental na PCA porque ajuda a decidir quantos componentes principais manter. O objetivo é reduzir a dimensionalidade dos dados enquanto retém a maior parte da informação relevante. A regra geral é manter componentes que, juntos, expliquem uma porcentagem significativa da variância (como 90% ou 95%). Neste caso, o número de componentes principais que explicam 95% da variância é 68. Portanto, podemos reduzir a dimensionalidade dos dados de 80 para 68 mantendo a maioria da informação relevante.
+
+
