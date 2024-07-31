@@ -181,7 +181,7 @@ empty_rows <- !complete.cases(test_data)
 print(test_data[empty_rows, ])
 
 
-# 10. Análise e aplicação de técnicas de amostragem de dados
+# 10 e 11. Análise e aplicação de técnicas de amostragem de dados
 # Checar a distribuição da base de treinamento do atributo alvo
 table(train_data$income)
 # Calcular proporções

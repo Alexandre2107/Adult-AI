@@ -19,9 +19,24 @@ colnames(database) <- c("age", "workclass", "fnlwgt", "education", "education_nu
 database
 ```
 
-```{r echo = FALSE, results= 'asis'}
+```{r echo = FALSE, results = 'asis'}
 library(knitr)
-kable(database[1:5, ], caption = "Adult Database")
+
+# Sample data for demonstration
+data_part1 <- database[1:5, 1:7]
+data_part2 <- database[1:5, 8:ncol(database)]
+
+# Create the first part of the table
+table1 <- kable(data_part1, caption = "Adult Database - Part 1")
+
+# Create the second part of the table
+table2 <- kable(data_part2, caption = "Adult Database - Part 2")
+
+# Print the tables
+cat(table1, sep = "\n")
+cat("\n\n")
+cat(table2, sep = "\n")
+
 ```
 
 ## 1. Identificação do atributo alvo (saída)
