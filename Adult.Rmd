@@ -1,6 +1,7 @@
 ---
 title: "Análise da Base de Dados Adult"
 output:
+  pdf_document: default
   html_document:
     df_print: paged
 ---
@@ -803,5 +804,38 @@ head(pca_data)
 ```
 
 A análise da proporção da variância é fundamental na PCA porque ajuda a decidir quantos componentes principais manter. O objetivo é reduzir a dimensionalidade dos dados enquanto retém a maior parte da informação relevante. A regra geral é manter componentes que, juntos, expliquem uma porcentagem significativa da variância (como 90% ou 95%). Neste caso, o número de componentes principais que explicam 95% da variância é 68. Portanto, podemos reduzir a dimensionalidade dos dados de 80 para 68 mantendo a maioria da informação relevante.
+
+# 15. Definição da técnica de validação a ser utilizada
+
+## Para a base de dados Adult, vamos utilizar a Validação Cruzada k-fold onde k = 10, vamos utilizar a técnica de k-fold para evitar o overfitting e proporcionar uma estimativa robusta do desempenho do modelo.
+
+```{r}
+# Definindo o número de folds para a validação cruzada
+k <- 10
+
+# Função para realizar a validação cruzada
+cross_val <- function(model, data, k) {
+  folds <- cut(seq(1,nrow(data)), breaks=k, labels=FALSE)
+  results <- list()
+  
+  for(i in 1:k) {
+    # Segmentando os dados em treino e teste
+    testIndexes <- which(folds == i, arr.ind=TRUE)
+    test_data <- data[testIndexes, ]
+    train_data <- data[-testIndexes, ]
+    
+    # Treinando o modelo
+    model_fit <- model(trainData)
+    
+    # Previsões no conjunto de teste
+    predictions <- predict(model_fit, testData[-ncol(testData)])
+    
+    # Armazenando resultados
+    results[[i]] <- data.frame(Actual = testData[,ncol(testData)], Predicted = predictions)
+  }
+  
+  return(results)
+}
+```
 
 
