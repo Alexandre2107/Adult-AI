@@ -583,160 +583,82 @@ pca_data <- as.data.frame(pca_result$x[, 1:num_components])
 # Visualizar os dados transformados
 head(pca_data)
 
-# Carregar dados de treino e teste
-train_data <- read.csv('Adult.CSV', header = TRUE, stringsAsFactors = FALSE)
-test_data <- read.csv('adultTest.csv', header = TRUE, stringsAsFactors = FALSE)
-
-# Pré-processamento de dados
-# Substituir valores " ?" por NA
-train_data[train_data == " ?"] <- NA
-test_data[test_data == " ?"] <- NA
-
-# Converter variáveis categóricas para fatores
-train_data <- data.frame(lapply(train_data, function(x) if (is.character(x)) as.factor(x) else x))
-test_data <- data.frame(lapply(test_data, function(x) if (is.character(x)) as.factor(x) else x))
-
-# Separar atributos e rótulo (variável alvo)
-train_data$income <- as.factor(train_data$income)
-test_data$income <- as.factor(test_data$income)
-
-# Função para calcular acurácia
-calculate_accuracy <- function(true_labels, predicted_labels) {
-  sum(true_labels == predicted_labels) / length(true_labels)
-}
-
-# Função para calcular precisão
-calculate_precision <- function(true_labels, predicted_labels) {
-  tp <- sum(true_labels == 1 & predicted_labels == 1)
-  fp <- sum(true_labels == 0 & predicted_labels == 1)
-  tp / (tp + fp)
-}
-
-# Função para calcular recall
-calculate_recall <- function(true_labels, predicted_labels) {
-  tp <- sum(true_labels == 1 & predicted_labels == 1)
-  fn <- sum(true_labels == 1 & predicted_labels == 0)
-  tp / (tp + fn)
-}
-
-# Função para calcular F1-Score
-calculate_f1 <- function(true_labels, predicted_labels) {
-  precision <- calculate_precision(true_labels, predicted_labels)
-  recall <- calculate_recall(true_labels, predicted_labels)
-  2 * (precision * recall) / (precision + recall)
-}
-
-# Função para calcular Matriz de Confusão
-calculate_confusion_matrix <- function(true_labels, predicted_labels) {
-  table(true_labels, predicted_labels)
-}
-
-# 1. Técnica de Validação: Cross-Validation com 10-fold sem bibliotecas
-cross_validation <- function(data, k = 10) {
-  set.seed(123)  # Para reprodutibilidade
-  folds <- cut(seq(1, nrow(data)), breaks = k, labels = FALSE)
+# Definindo a função para calcular métricas de avaliação
+cross_validation_metrics <- function(train_data, k) {
+  n <- nrow(train_data)  # Número total de observações
+  folds <- sample(rep(1:k, length.out = n))  # Dividindo os dados em k grupos aleatórios
   
-  accuracies <- c()
+  accuracy_list <- c()
+  precision_list <- c()
+  recall_list <- c()
+  confusion_matrices <- list()
   
   for (i in 1:k) {
-    # Dividir os dados em treino e validação
-    test_indices <- which(folds == i, arr.ind = TRUE)
-    validation_data <- data[test_indices, ]
-    training_data <- data[-test_indices, ]
+    # Separando o fold de validação
+    validation_indexes <- which(folds == i)
+    validation_set <- train_data[validation_indexes, ]
     
-    # Algoritmo de classe majoritária (Baseline)
-    majority_class <- as.character(names(sort(table(training_data$income), decreasing = TRUE)[1]))
-    predictions <- rep(majority_class, nrow(validation_data))
+    # Dados de treinamento são todos os outros folds
+    training_set <- train_data[-validation_indexes, ]
     
-    # Calcular a acurácia
-    accuracy <- calculate_accuracy(validation_data$income, predictions)
-    accuracies <- c(accuracies, accuracy)
+    # Garantindo que o target (última coluna) seja numérico
+    target_col <- ncol(training_set)
+    training_set[, target_col] <- as.numeric(training_set[, target_col])
+    validation_set[, target_col] <- as.numeric(validation_set[, target_col])
+    
+    # Modelo simples: prever com base na média do target (threshold = 0.5 para classificação)
+    mean_prediction <- mean(training_set[, target_col])
+    threshold <- 0.5
+    predictions <- ifelse(rep(mean_prediction, nrow(validation_set)) >= threshold, 1, 0)
+    
+    # Valores reais do target
+    actual <- validation_set[, target_col]
+    
+    # Matriz de Confusão
+    true_positive <- sum(predictions == 1 & actual == 1)
+    true_negative <- sum(predictions == 0 & actual == 0)
+    false_positive <- sum(predictions == 1 & actual == 0)
+    false_negative <- sum(predictions == 0 & actual == 1)
+    
+    # Calculando métricas
+    accuracy <- (true_positive + true_negative) / length(actual)
+    precision <- true_positive / (true_positive + false_positive + 1e-10)  # Adicionando um pequeno valor para evitar divisão por zero
+    recall <- true_positive / (true_positive + false_negative + 1e-10)
+    
+    # Armazenando resultados
+    accuracy_list <- c(accuracy_list, accuracy)
+    precision_list <- c(precision_list, precision)
+    recall_list <- c(recall_list, recall)
+    
+    # Armazenando a matriz de confusão
+    confusion_matrices[[i]] <- matrix(c(true_negative, false_positive, false_negative, true_positive), 
+                                      nrow = 2, byrow = TRUE,
+                                      dimnames = list('Actual' = c('0', '1'), 'Predicted' = c('0', '1')))
   }
   
-  mean(accuracies)
+  # Retornando as métricas médias e as matrizes de confusão
+  results <- list(
+    accuracy = mean(accuracy_list),
+    precision = mean(precision_list),
+    recall = mean(recall_list),
+    confusion_matrices = confusion_matrices
+  )
+  
+  return(results)
 }
 
-# Calcular a acurácia do baseline usando cross-validation
-baseline_accuracy <- cross_validation(train_data)
-cat("Acurácia média do Algoritmo Baseline (Classe Majoritária):", baseline_accuracy, "\n")
+# Exemplo de uso da função com k = 5 folds
+resultado_cross_validation <- cross_validation_metrics(train_data, k = 5)
 
-# Função para analisar resultados do baseline
-analyze_baseline_results <- function(test_data, majority_class) {
-  predictions <- rep(majority_class, nrow(test_data))
-  accuracy <- calculate_accuracy(test_data$income, predictions)
-  precision <- calculate_precision(test_data$income, predictions)
-  recall <- calculate_recall(test_data$income, predictions)
-  f1 <- calculate_f1(test_data$income, predictions)
-  confusion_matrix <- calculate_confusion_matrix(test_data$income, predictions)
-  
-  list(accuracy = accuracy, precision = precision, recall = recall, f1 = f1, confusion_matrix = confusion_matrix)
+# Exibindo os resultados
+print(paste("Acurácia Média:", resultado_cross_validation$accuracy))
+print(paste("Precisão Média:", resultado_cross_validation$precision))
+print(paste("Recall Médio:", resultado_cross_validation$recall))
+
+# Exibindo as matrizes de confusão de cada fold
+for (i in 1:5) {
+  print(paste("Matriz de Confusão do Fold", i))
+  print(resultado_cross_validation$confusion_matrices[[i]])
 }
 
-# Obter a classe majoritária dos dados de treino
-majority_class <- as.character(names(sort(table(train_data$income), decreasing = TRUE)[1]))
-
-# Analisar os resultados do algoritmo baseline
-baseline_results <- analyze_baseline_results(test_data, majority_class)
-print("Resultados do Algoritmo Baseline (Classe Majoritária):")
-print(baseline_results)
-
-# 4. Modelo preditivo utilizando algoritmo K-NN
-library(class)
-
-knn_model <- function(train_data, test_data, k = 5) {
-  train_data_numeric <- train_data[sapply(train_data, is.numeric)]
-  test_data_numeric <- test_data[sapply(test_data, is.numeric)]
-  
-  train_labels <- train_data$income
-  test_labels <- test_data$income
-  
-  predictions <- knn(train = train_data_numeric, test = test_data_numeric, cl = train_labels, k = k)
-  
-  list(predictions = predictions, accuracy = calculate_accuracy(test_labels, predictions))
-}
-
-knn_results <- knn_model(train_data, test_data, k = 5)
-print("Resultados do Modelo K-NN:")
-print(knn_results)
-
-# 5. Modelo preditivo utilizando algoritmo de Árvore de Decisão
-library(rpart)
-
-tree_model <- rpart(income ~ ., data = train_data, method = "class")
-tree_predictions <- predict(tree_model, test_data, type = "class")
-
-tree_accuracy <- calculate_accuracy(test_data$income, tree_predictions)
-print(paste("Acurácia da Árvore de Decisão:", tree_accuracy))
-
-# 6. Modelo preditivo utilizando Redes Neurais Artificiais (MLP)
-library(nnet)
-
-mlp_model <- nnet(income ~ ., data = train_data, size = 10, maxit = 200)
-mlp_predictions <- predict(mlp_model, test_data, type = "class")
-
-mlp_accuracy <- calculate_accuracy(test_data$income, mlp_predictions)
-print(paste("Acurácia da Rede Neural (MLP):", mlp_accuracy))
-
-# 7. Análise dos Resultados dos Três Algoritmos
-analyze_results <- function(predictions, true_labels) {
-  accuracy <- calculate_accuracy(true_labels, predictions)
-  precision <- calculate_precision(true_labels, predictions)
-  recall <- calculate_recall(true_labels, predictions)
-  f1 <- calculate_f1(true_labels, predictions)
-  confusion_matrix <- calculate_confusion_matrix(true_labels, predictions)
-  
-  list(accuracy = accuracy, precision = precision, recall = recall, f1 = f1, confusion_matrix = confusion_matrix)
-}
-
-# Análise dos resultados do K-NN
-print("Análise dos Resultados do K-NN:")
-print(analyze_results(knn_results$predictions, test_data$income))
-
-# Análise dos resultados da Árvore de Decisão
-print("Análise dos Resultados da Árvore de Decisão:")
-print(analyze_results(tree_predictions, test_data$income))
-
-# Análise dos resultados da Rede Neural
-print("Análise dos Resultados da Rede Neural:")
-print(analyze_results(mlp_predictions, test_data$income))
 
